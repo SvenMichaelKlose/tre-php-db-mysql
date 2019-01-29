@@ -9,8 +9,8 @@
   this)
 
 (defmember db-mysql
-	_name
-	_conn
+    _name
+    _conn
     _column-names)
 
 (defmethod db-mysql last-insert-row-i-d ()
@@ -38,7 +38,7 @@
   (_log statement)
   (with (res (_conn.query statement)
          ret (make-queue))
-	(_handle-error "exec")
+    (_handle-error "exec")
     (unless (is_bool res)
       (awhile (res.fetch_row)
               (queue-list ret)
