@@ -4,6 +4,7 @@
   (= _name name)
   (= _conn (new mysqli host user password))
   (= _column-names (make-hash-table))
+  (= _logging? nil)
   (_conn.set_charset "utf8")
   (_conn.select_db _name)
   this)
@@ -11,7 +12,11 @@
 (defmember db-mysql
     _name
     _conn
-    _column-names)
+    _column-names
+    _logging?)
+
+(defmethod db-mysql set-logging (x)
+  (= _logging? x))
 
 (defmethod db-mysql last-insert-row-i-d ()
   _conn.insert_id)
@@ -29,10 +34,10 @@
     (error (+ "Error: PHP-SQL." (upcase method-name) ": " (last-error-string)))))
 
 (defmethod db-mysql _log (statement)
-  (log-message (+ "SQL: "
-                  (? (< *sql-max-log-message-length* (length statement))
-                     (subseq statement (- (length statement) *sql-max-log-message-length*))
-                     statement))))
+  (& _logging?
+     (log-message (+ "SQL: " (? (< *sql-max-log-message-length* (length statement))
+                                (subseq statement (- (length statement) *sql-max-log-message-length*))
+                                statement)))))
 
 (defmethod db-mysql exec (statement)
   (_log statement)
