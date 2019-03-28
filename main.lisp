@@ -39,15 +39,25 @@
                                 (subseq statement (- (length statement) *sql-max-log-message-length*))
                                 statement)))))
 
+(defmethod db-mysql exec-list (statement)
+  (_log statement)
+  (with (res (_conn.query statement)
+         ret (make-queue))
+    (_handle-error "exec-list")
+    (unless (is_bool res)
+      (awhile (res.fetch_row)
+              (queue-list ret)
+        (enqueue ret (array-list !))))))
+
 (defmethod db-mysql exec (statement)
   (_log statement)
   (with (res (_conn.query statement)
          ret (make-queue))
     (_handle-error "exec")
     (unless (is_bool res)
-      (awhile (res.fetch_row)
+      (awhile (res.fetch_object)
               (queue-list ret)
-        (enqueue ret (array-list !))))))
+        (enqueue ret !)))))
 
 (defmethod db-mysql exec-simple (statement)
   (_log statement)
@@ -55,15 +65,15 @@
 
 (defmethod db-mysql column-names (table-name)
   (| (href _column-names table-name)
-     (= (href _column-names table-name) (carlist (exec (+ "SHOW COLUMNS FROM " table-name))))))
+     (= (href _column-names table-name) (carlist (exec-list (+ "SHOW COLUMNS FROM " table-name))))))
 
 (defmethod db-mysql add-column (table-name column-name)
   (exec (+ "ALTER TABLE " table-name " ADD COLUMN " column-name)))
 
 (defmethod db-mysql table? (name)
   (prog1
-    (== 1 (caar (exec (+ "SELECT COUNT(1) FROM information_schema.tables "
-                         " WHERE table_schema='" _name "' AND table_name='" name "'"))))
+    (== 1 (caar (exec-list (+ "SELECT COUNT(1) FROM information_schema.tables "
+                              " WHERE table_schema='" _name "' AND table_name='" name "'"))))
     (_handle-error "table?")))
 
 (defmethod db-mysql begin-transaction ()
